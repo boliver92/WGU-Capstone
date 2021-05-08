@@ -3,9 +3,6 @@ import model.train_model
 import tensorflow as tf
 import os
 import matplotlib.pyplot as plt
-import numpy as np
-import csv
-from PIL import Image
 
 '''
 Brian Oliver
