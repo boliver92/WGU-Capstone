@@ -1,8 +1,9 @@
-from flask import render_template, request, redirect
+from flask import render_template, request, redirect, flash
 
 from app import app,APP_ROOT
 from app.process import predict_img
 import os
+from app.db import get_db
 
 
 @app.route('/')
@@ -21,7 +22,7 @@ def predict():
 def upload():
     target = os.path.join(APP_ROOT, 'temp\\')
     if request.method == "POST":
-        file = request.files['img']
+        file = request.files['imgInp']
         filename = file.filename
         file.save("".join([target, filename]))
         print("Upload Complete")
@@ -29,5 +30,18 @@ def upload():
 
 @app.route("/prediction/<filename>",methods=["GET", "POST"])
 def prediction(filename):
-    x = predict_img(filename)
+    db = get_db()
+    fileResult = db.execute(
+        'SELECT * FROM xray_results WHERE xray_name = ?', (filename,)
+    ).fetchone()
+
+    if fileResult is None:
+        x = predict_img(filename)
+        db.execute(
+            'INSERT INTO xray_results (xray_name, result) VALUES (?, ?)', (filename, x,)
+        )
+    else:
+        x = fileResult['result']
+        flash("Retrieved from DB")
+
     return render_template('output.html', results=x)
